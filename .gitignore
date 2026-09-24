@@ -1,0 +1,6 @@
+nowire
+.nowire.yml
+.nowire-policy.md
+nowire-review.md
+nowire.sarif
+.DS_Store
