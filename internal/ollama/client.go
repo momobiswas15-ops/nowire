@@ -29,7 +29,7 @@ func New(url string) *Client {
 	return &Client{strings.TrimRight(url, "/"), &http.Client{Timeout: 120 * time.Second}}
 }
 func (c *Client) Generate(ctx context.Context, model, prompt string) (string, error) {
-	body, _ := json.Marshal(request{Model: model, Prompt: prompt, Stream: false})
+	body, _ := json.Marshal(request{Model: model, Prompt: prompt, Stream: false, Format: "json"})
 	req, err := http.NewRequestWithContext(ctx, "POST", c.BaseURL+"/api/generate", bytes.NewReader(body))
 	if err != nil {
 		return "", err
@@ -45,6 +45,9 @@ func (c *Client) Generate(ctx context.Context, model, prompt string) (string, er
 		return "", err
 	}
 	if r.StatusCode >= 300 || out.Error != "" {
+		if out.Error == "" {
+			out.Error = r.Status
+		}
 		return "", fmt.Errorf("ollama: %s", out.Error)
 	}
 	return out.Response, nil

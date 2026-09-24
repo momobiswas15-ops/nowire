@@ -14,10 +14,12 @@ type Hunk struct {
 	Start int
 }
 
-func Collect(path string, staged bool) ([]Hunk, error) {
+func Collect(path string, staged bool, base string) ([]Hunk, error) {
 	args := []string{"diff", "--unified=40"}
 	if staged {
 		args = append(args, "--staged")
+	} else if base != "" {
+		args = append(args, base+"...HEAD")
 	}
 	if path != "" {
 		args = append(args, "--", path)

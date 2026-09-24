@@ -21,9 +21,13 @@ nowire review
 nowire review --format markdown --output nowire-review.md --fail-on medium
 nowire review --format sarif --output nowire.sarif
 nowire review --model qwen2.5-coder:14b --ollama http://127.0.0.1:11434
+# Review a pull-request range locally
+nowire review --base origin/main --workers 2
 ```
 
 Exit codes are **0** for a clean review, **1** when findings meet `--fail-on`, and **2** for an execution error.
+
+`--base REF` reviews `REF...HEAD`, which is the mode used by the GitHub Action. `--workers N` enables bounded parallel requests for large diffs; keep it at `1` on machines with limited memory.
 
 ### GitHub Action
 
@@ -40,10 +44,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
-      - uses: nowire/nowire/action@v0.1.0
+      - uses: nowire/nowire/action@v0.2.0
         with:
           model: qwen2.5-coder:7b
           fail-on: high
+          base: ${{ github.event.pull_request.base.sha }}
 ```
 
 For private code, use a self-hosted runner if you do not want source code to leave your infrastructure. The Action itself never calls a hosted AI API.

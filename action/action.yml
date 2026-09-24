@@ -10,6 +10,12 @@ inputs:
   ollama-url:
     description: Ollama endpoint
     default: http://127.0.0.1:11434
+  base:
+    description: Base commit or ref to compare against
+    default: ''
+  workers:
+    description: Concurrent local review requests
+    default: '1'
 runs:
   using: composite
   steps:
@@ -24,10 +30,10 @@ runs:
         ollama pull "${{ inputs.model }}"
     - name: Install nowire
       shell: bash
-      run: go install github.com/nowire/nowire/cmd/nowire@v0.1.0
+      run: GOBIN="$RUNNER_TEMP/bin" go install github.com/nowire/nowire/cmd/nowire@v0.2.0
     - name: Review pull request
       shell: bash
-      run: nowire review --format markdown --output nowire-review.md --fail-on "${{ inputs.fail-on }}"
+      run: "$RUNNER_TEMP/bin/nowire" review --base "${{ inputs.base }}" --workers "${{ inputs.workers }}" --format markdown --output nowire-review.md --fail-on "${{ inputs.fail-on }}" --ollama "${{ inputs.ollama-url }}"
     - name: Publish review summary
       if: always()
       shell: bash
