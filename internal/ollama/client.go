@@ -28,30 +28,52 @@ type response struct {
 func New(url string) *Client {
 	return &Client{strings.TrimRight(url, "/"), &http.Client{Timeout: 120 * time.Second}}
 }
+
 func (c *Client) Generate(ctx context.Context, model, prompt string) (string, error) {
-	body, _ := json.Marshal(request{Model: model, Prompt: prompt, Stream: false, Format: "json"})
-	req, err := http.NewRequestWithContext(ctx, "POST", c.BaseURL+"/api/generate", bytes.NewReader(body))
+	body, err := json.Marshal(request{Model: model, Prompt: prompt, Stream: false, Format: "json"})
 	if err != nil {
 		return "", err
 	}
-	req.Header.Set("Content-Type", "application/json")
-	r, err := c.HTTP.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("ollama unavailable: %w", err)
-	}
-	defer r.Body.Close()
-	var out response
-	if err = json.NewDecoder(r.Body).Decode(&out); err != nil {
-		return "", err
-	}
-	if r.StatusCode >= 300 || out.Error != "" {
-		if out.Error == "" {
-			out.Error = r.Status
+	var last error
+	for attempt := 0; attempt < 3; attempt++ {
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL+"/api/generate", bytes.NewReader(body))
+		if err != nil {
+			return "", err
 		}
-		return "", fmt.Errorf("ollama: %s", out.Error)
+		req.Header.Set("Content-Type", "application/json")
+		res, err := c.HTTP.Do(req)
+		if err != nil {
+			last = fmt.Errorf("ollama unavailable: %w", err)
+		} else {
+			var out response
+			decodeErr := json.NewDecoder(res.Body).Decode(&out)
+			res.Body.Close()
+			if decodeErr != nil {
+				last = decodeErr
+			} else if res.StatusCode >= 300 || out.Error != "" {
+				if out.Error == "" {
+					out.Error = res.Status
+				}
+				last = fmt.Errorf("ollama: %s", out.Error)
+				if res.StatusCode < 429 && res.StatusCode < 500 {
+					return "", last
+				}
+			} else {
+				return out.Response, nil
+			}
+		}
+		if attempt < 2 {
+			delay := time.Duration(1<<attempt) * 250 * time.Millisecond
+			select {
+			case <-ctx.Done():
+				return "", ctx.Err()
+			case <-time.After(delay):
+			}
+		}
 	}
-	return out.Response, nil
+	return "", last
 }
+
 func Prompt(policy, file, code string) string {
 	return fmt.Sprintf(`You are a strict but constructive senior code reviewer. Review only the supplied changed context. Return JSON array only, no markdown, with objects matching: {"severity":"high|medium|low","file":"string","line":number,"title":"short title","message":"specific actionable explanation","suggestion":"minimal fix"}. Ignore formatting nits. Report real bugs, security issues, data loss, broken error handling, and maintainability risks. Do not invent APIs or complain about code outside the context.
 Repository policy:

@@ -20,6 +20,7 @@ nowire review
 ```bash
 nowire review --format markdown --output nowire-review.md --fail-on medium
 nowire review --format sarif --output nowire.sarif
+nowire review --format github              # inline workflow annotations
 nowire review --model qwen2.5-coder:14b --ollama http://127.0.0.1:11434
 # Review a pull-request range locally
 nowire review --base origin/main --workers 2
@@ -28,6 +29,8 @@ nowire review --base origin/main --workers 2
 Exit codes are **0** for a clean review, **1** when findings meet `--fail-on`, and **2** for an execution error.
 
 `--base REF` reviews `REF...HEAD`, which is the mode used by the GitHub Action. `--workers N` enables bounded parallel requests for large diffs; keep it at `1` on machines with limited memory.
+
+Use `nowire doctor` before a review to verify Git, Ollama, and the configured model. Use `--timeout 5m` for unusually large changes. The `github` output emits native workflow annotations while `sarif` integrates with code-scanning viewers.
 
 ### GitHub Action
 
@@ -44,7 +47,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
-      - uses: nowire/nowire/action@v0.2.0
+      - uses: nowire/nowire/action@v0.3.0
         with:
           model: qwen2.5-coder:7b
           fail-on: high

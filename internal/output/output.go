@@ -32,6 +32,18 @@ func Markdown(fs []review.Finding) string {
 	if len(fs) == 0 {
 		return b.String() + "✅ No issues found.\n"
 	}
+	high, medium, low := 0, 0, 0
+	for _, f := range fs {
+		switch strings.ToLower(f.Severity) {
+		case "high":
+			high++
+		case "medium":
+			medium++
+		default:
+			low++
+		}
+	}
+	fmt.Fprintf(&b, "**%d finding(s)** · high: **%d** · medium: **%d** · low: **%d**\n\n", len(fs), high, medium, low)
 	for _, f := range fs {
 		fmt.Fprintf(&b, "- **%s** `%s:%d` — **%s**: %s", strings.ToUpper(f.Severity), f.File, f.Line, f.Title, f.Message)
 		if f.Suggestion != "" {
@@ -40,6 +52,29 @@ func Markdown(fs []review.Finding) string {
 		b.WriteString("\n")
 	}
 	return b.String()
+}
+
+func GitHubAnnotations(fs []review.Finding) string {
+	var b strings.Builder
+	for _, f := range fs {
+		command := "notice"
+		if strings.EqualFold(f.Severity, "high") {
+			command = "error"
+		} else if strings.EqualFold(f.Severity, "medium") {
+			command = "warning"
+		}
+		message := annotationEscape(f.Message)
+		fmt.Fprintf(&b, "::%s file=%s,line=%d,title=%s::%s\n", command, annotationEscape(f.File), f.Line, annotationEscape(f.Title), message)
+	}
+	return b.String()
+}
+
+func annotationEscape(value string) string {
+	value = strings.ReplaceAll(value, "%", "%25")
+	value = strings.ReplaceAll(value, "\r", "%0D")
+	value = strings.ReplaceAll(value, "\n", "%0A")
+	value = strings.ReplaceAll(value, ":", "%3A")
+	return strings.ReplaceAll(value, ",", "%2C")
 }
 
 type sarif struct {

@@ -30,7 +30,7 @@ runs:
         ollama pull "${{ inputs.model }}"
     - name: Install nowire
       shell: bash
-      run: GOBIN="$RUNNER_TEMP/bin" go install github.com/nowire/nowire/cmd/nowire@v0.2.0
+      run: GOBIN="$RUNNER_TEMP/bin" go install github.com/nowire/nowire/cmd/nowire@v0.3.0
     - name: Review pull request
       shell: bash
       run: "$RUNNER_TEMP/bin/nowire" review --base "${{ inputs.base }}" --workers "${{ inputs.workers }}" --format markdown --output nowire-review.md --fail-on "${{ inputs.fail-on }}" --ollama "${{ inputs.ollama-url }}"
