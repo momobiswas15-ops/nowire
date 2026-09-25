@@ -37,6 +37,7 @@ nowire review --format markdown --output nowire-review.md --fail-on medium
 nowire review --format sarif --output nowire.sarif
 nowire review --format github              # inline workflow annotations
 nowire review --model qwen2.5-coder:14b --ollama http://127.0.0.1:11434
+nowire review --template examples/roast-template.md
 # Review a pull-request range locally
 nowire review --base origin/main --workers 2
 ```
@@ -46,6 +47,10 @@ Exit codes are **0** for a clean review, **1** when findings meet `--fail-on`, a
 `--base REF` reviews `REF...HEAD`, which is the mode used by the GitHub Action. `--workers N` enables bounded parallel requests for large diffs; keep it at `1` on machines with limited memory.
 
 Use `nowire doctor` before a review to verify Git, Ollama, and the configured model. Use `--timeout 5m` for unusually large changes. The `github` output emits native workflow annotations while `sarif` integrates with code-scanning viewers.
+
+### Custom roast templates
+
+Pass `--template FILE` or set `template: FILE` in `.nowire.yml` to customize the reviewer’s persona, priorities, and response instructions. Templates support exactly three placeholders: `{{policy}}`, `{{file}}`, and `{{code}}`. A complete starter template is available at [`examples/roast-template.md`](examples/roast-template.md). Keep the final JSON-output requirement in custom templates so nowire can parse findings reliably.
 
 ### GitHub Action
 
@@ -62,11 +67,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
-      - uses: nowire/nowire/action@v0.3.0
+      - uses: nowire/nowire/action@v0.4.0
         with:
           model: qwen2.5-coder:7b
           fail-on: high
           base: ${{ github.event.pull_request.base.sha }}
+          template: .github/nowire-roast.md
 ```
 
 For private code, use a self-hosted runner if you do not want source code to leave your infrastructure. The Action itself never calls a hosted AI API.
@@ -84,6 +90,8 @@ policy: .nowire-policy.md
 ```
 
 The policy file is injected into every review prompt, so teams can encode conventions such as error handling, logging, security, or testing expectations. Environment variables `NOWIRE_MODEL` and `OLLAMA_HOST` are supported.
+
+The Action accepts `policy` and `template` inputs, making the review behavior explicit in CI. The repository also includes a separate `security` workflow that runs CodeQL for Go, `govulncheck`, and dependency review on pull requests.
 
 ## Design
 

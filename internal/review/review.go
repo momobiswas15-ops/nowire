@@ -21,7 +21,7 @@ type Finding struct {
 	Suggestion string `json:"suggestion,omitempty"`
 }
 
-func Run(ctx context.Context, c *ollama.Client, model, policy string, hunks []diff.Hunk, workers int) ([]Finding, error) {
+func Run(ctx context.Context, c *ollama.Client, model, policy, template string, hunks []diff.Hunk, workers int) ([]Finding, error) {
 	if len(hunks) == 0 {
 		return nil, nil
 	}
@@ -40,7 +40,7 @@ func Run(ctx context.Context, c *ollama.Client, model, policy string, hunks []di
 		defer wg.Done()
 		for i := range jobs {
 			h := hunks[i]
-			raw, err := c.Generate(ctx, model, ollama.Prompt(policy, h.File, h.Added))
+			raw, err := c.Generate(ctx, model, ollama.RenderTemplate(template, policy, h.File, h.Added))
 			if err != nil {
 				errMu.Lock()
 				if firstErr == nil {

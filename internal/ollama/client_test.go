@@ -36,3 +36,10 @@ func TestHasModel(t *testing.T) {
 		t.Fatal("expected model match")
 	}
 }
+
+func TestRenderTemplateReplacesSupportedPlaceholders(t *testing.T) {
+	got := RenderTemplate("policy={{policy}} file={{file}} code={{code}}", "strict", "main.go", "return nil")
+	if got != "policy=strict file=main.go code=return nil" {
+		t.Fatalf("unexpected template rendering: %q", got)
+	}
+}

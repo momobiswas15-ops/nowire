@@ -12,6 +12,7 @@ type Config struct {
 	FailOn    string
 	Output    string
 	Policy    string
+	Template  string
 	Ignore    []string
 }
 
@@ -55,10 +56,15 @@ func Load(path string) Config {
 			c.Output = v
 		case "policy":
 			c.Policy = v
+		case "template":
+			c.Template = v
 		}
 	}
 	if c.Policy != "" && !filepath.IsAbs(c.Policy) {
 		c.Policy = filepath.Clean(c.Policy)
+	}
+	if c.Template != "" && !filepath.IsAbs(c.Template) {
+		c.Template = filepath.Clean(c.Template)
 	}
 	return c
 }
@@ -67,5 +73,5 @@ func (c Config) Save(path string) error {
 	if path == "" {
 		path = ".nowire.yml"
 	}
-	return os.WriteFile(path, []byte("# nowire configuration\nmodel: "+c.Model+"\nollama_url: "+c.OllamaURL+"\nfail_on: "+c.FailOn+"\noutput: "+c.Output+"\npolicy: .nowire-policy.md\n"), 0644)
+	return os.WriteFile(path, []byte("# nowire configuration\nmodel: "+c.Model+"\nollama_url: "+c.OllamaURL+"\nfail_on: "+c.FailOn+"\noutput: "+c.Output+"\npolicy: .nowire-policy.md\n# template: .nowire-roast.md\n"), 0644)
 }

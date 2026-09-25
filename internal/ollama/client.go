@@ -74,11 +74,20 @@ func (c *Client) Generate(ctx context.Context, model, prompt string) (string, er
 	return "", last
 }
 
-func Prompt(policy, file, code string) string {
-	return fmt.Sprintf(`You are a strict but constructive senior code reviewer. Review only the supplied changed context. Return JSON array only, no markdown, with objects matching: {"severity":"high|medium|low","file":"string","line":number,"title":"short title","message":"specific actionable explanation","suggestion":"minimal fix"}. Ignore formatting nits. Report real bugs, security issues, data loss, broken error handling, and maintainability risks. Do not invent APIs or complain about code outside the context.
+const DefaultTemplate = `You are a strict but constructive senior code reviewer. Review only the supplied changed context. Return JSON array only, no markdown, with objects matching: {"severity":"high|medium|low","file":"string","line":number,"title":"short title","message":"specific actionable explanation","suggestion":"minimal fix"}. Ignore formatting nits. Report real bugs, security issues, data loss, broken error handling, and maintainability risks. Do not invent APIs or complain about code outside the context.
 Repository policy:
-%s
-File: %s
+{{policy}}
+File: {{file}}
 Changed context:
-%s`, policy, file, code)
+{{code}}`
+
+func Prompt(policy, file, code string) string {
+	return RenderTemplate(DefaultTemplate, policy, file, code)
+}
+
+func RenderTemplate(template, policy, file, code string) string {
+	if template == "" {
+		template = DefaultTemplate
+	}
+	return strings.NewReplacer("{{policy}}", policy, "{{file}}", file, "{{code}}", code).Replace(template)
 }

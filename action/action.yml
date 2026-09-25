@@ -16,6 +16,12 @@ inputs:
   workers:
     description: Concurrent local review requests
     default: '1'
+  policy:
+    description: Optional repository policy file
+    default: ''
+  template:
+    description: Optional custom roast template file using {{policy}}, {{file}}, and {{code}}
+    default: ''
 runs:
   using: composite
   steps:
@@ -30,10 +36,13 @@ runs:
         ollama pull "${{ inputs.model }}"
     - name: Install nowire
       shell: bash
-      run: GOBIN="$RUNNER_TEMP/bin" go install github.com/nowire/nowire/cmd/nowire@v0.3.0
+      run: GOBIN="$RUNNER_TEMP/bin" go install github.com/nowire/nowire/cmd/nowire@v0.4.0
     - name: Review pull request
       shell: bash
-      run: "$RUNNER_TEMP/bin/nowire" review --base "${{ inputs.base }}" --workers "${{ inputs.workers }}" --format markdown --output nowire-review.md --fail-on "${{ inputs.fail-on }}" --ollama "${{ inputs.ollama-url }}"
+      run: |
+        args=(review --base "${{ inputs.base }}" --workers "${{ inputs.workers }}" --format markdown --output nowire-review.md --fail-on "${{ inputs.fail-on }}" --ollama "${{ inputs.ollama-url }}" --policy "${{ inputs.policy }}")
+        if [[ -n "${{ inputs.template }}" ]]; then args+=(--template "${{ inputs.template }}"); fi
+        "$RUNNER_TEMP/bin/nowire" "${args[@]}"
     - name: Publish review summary
       if: always()
       shell: bash

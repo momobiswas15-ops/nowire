@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-const version = "0.3.0"
+const version = "0.4.0"
 
 func main() {
 	if len(os.Args) < 2 {
@@ -48,9 +48,9 @@ Commands:
   nowire doctor                       check Git, Ollama, and model readiness
   nowire version                      print version
 
-Review flags: --staged, --base REF, --workers N, --timeout DURATION, --model,
+	Review flags: --staged, --base REF, --workers N, --timeout DURATION, --model,
 			--format terminal|markdown|github|json|sarif, --output FILE,
-              --fail-on high|medium|low, --ollama URL`)
+			--fail-on high|medium|low, --ollama URL, --policy FILE, --template FILE`)
 }
 func initCmd() {
 	c := config.Default()
@@ -99,6 +99,8 @@ func reviewCmd(args []string) {
 	out := fs.String("output", "", "write output to file")
 	failOn := fs.String("fail-on", "", "fail threshold")
 	url := fs.String("ollama", "", "Ollama URL")
+	policyFile := fs.String("policy", "", "repository policy file")
+	templateFile := fs.String("template", "", "custom roast template file")
 	fs.Parse(args)
 	path := ""
 	if fs.NArg() > 0 {
@@ -117,6 +119,12 @@ func reviewCmd(args []string) {
 	if *url != "" {
 		c.OllamaURL = *url
 	}
+	if *policyFile != "" {
+		c.Policy = *policyFile
+	}
+	if *templateFile != "" {
+		c.Template = *templateFile
+	}
 	h, err := diff.Collect(path, *staged, *base)
 	if err != nil {
 		fail(err)
@@ -127,16 +135,26 @@ func reviewCmd(args []string) {
 	}
 	policy := ""
 	if c.Policy != "" {
-		if b, e := os.ReadFile(c.Policy); e == nil {
-			policy = string(b)
+		b, e := os.ReadFile(c.Policy)
+		if e != nil {
+			fail(fmt.Errorf("read policy %s: %w", c.Policy, e))
 		}
+		policy = string(b)
+	}
+	template := ""
+	if c.Template != "" {
+		b, e := os.ReadFile(c.Template)
+		if e != nil {
+			fail(fmt.Errorf("read template %s: %w", c.Template, e))
+		}
+		template = string(b)
 	}
 	if *timeout <= 0 {
 		fail(fmt.Errorf("timeout must be positive"))
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), *timeout)
 	defer cancel()
-	findings, err := review.Run(ctx, ollama.New(c.OllamaURL), c.Model, policy, h, *workers)
+	findings, err := review.Run(ctx, ollama.New(c.OllamaURL), c.Model, policy, template, h, *workers)
 	if err != nil {
 		fail(err)
 	}
