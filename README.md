@@ -28,6 +28,8 @@ nowire review
 
 `nowire review` reviews the working-tree diff. Use `--staged` for staged changes or `nowire review ./path/to/file.go` to scope a review.
 
+Prebuilt binaries for Linux, macOS, and Windows are attached to the [latest release](https://github.com/momobiswas15-ops/nowire/releases/latest). Download the archive for your platform, verify `checksums.txt`, and place `nowire` on your `PATH`.
+
 > **Important:** The default Ollama URL is local. If you set `ollama_url`, `OLLAMA_HOST`, or `--ollama` to a remote server, review its data-handling policy before sending source code. See [SECURITY.md](SECURITY.md).
 
 ## Output and CI
@@ -104,6 +106,8 @@ go test ./...
 go vet ./...
 go build -o nowire ./cmd/nowire
 ```
+
+Tagged releases are built reproducibly with [GoReleaser](.goreleaser.yaml) by the [release workflow](.github/workflows/release.yml). The workflow publishes archives and SHA-256 checksums automatically.
 
 ## License
 
