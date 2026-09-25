@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/momobiswas15-ops/nowire/actions/workflows/test.yml/badge.svg)](https://github.com/momobiswas15-ops/nowire/actions/workflows/test.yml)
 [![Latest release](https://img.shields.io/github/v/release/momobiswas15-ops/nowire)](https://github.com/momobiswas15-ops/nowire/releases)
-[![Go Report Card](https://goreportcard.com/badge/github.com/momobiswas15-ops/nowire)](https://goreportcard.com/report/github.com/momobiswas15-ops/nowire)
+[![Go Reference](https://pkg.go.dev/badge/github.com/momobiswas15-ops/nowire.svg)](https://pkg.go.dev/github.com/momobiswas15-ops/nowire)
 
 > **Your PR reviewer, offline.** `ollama run` + GitHub Action that roasts your code without sending it to OpenAI.
 
