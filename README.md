@@ -1,8 +1,21 @@
 # nowire
 
+[![CI](https://github.com/momobiswas15-ops/nowire/actions/workflows/test.yml/badge.svg)](https://github.com/momobiswas15-ops/nowire/actions/workflows/test.yml)
+[![Latest release](https://img.shields.io/github/v/release/momobiswas15-ops/nowire)](https://github.com/momobiswas15-ops/nowire/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/momobiswas15-ops/nowire)](https://goreportcard.com/report/github.com/momobiswas15-ops/nowire)
+
 > **Your PR reviewer, offline.** `ollama run` + GitHub Action that roasts your code without sending it to OpenAI.
 
 nowire is a small Go CLI that sends only changed-code context to a local [Ollama](https://ollama.com) server. It returns actionable findings in the terminal, Markdown, JSON, or SARIF. No API keys. No source-code upload. No hosted AI dependency.
+
+**Why it is useful:** nowire gives teams a private review gate that can run on a laptop, a self-hosted runner, or an air-gapped development environment. The model is replaceable, the policy is version-controlled, and the output works in both terminals and code-scanning systems.
+
+| Capability | What you get |
+| --- | --- |
+| Privacy-first | Prompts go only to the configured Ollama endpoint |
+| CI-ready | PR-base diffs, exit codes, GitHub annotations, and SARIF |
+| Predictable | Bounded workers, retries, timeouts, deduplication, and stable sorting |
+| Extensible | Repository policy injection and swappable Ollama models |
 
 ## Quick start
 
@@ -14,6 +27,8 @@ nowire review
 ```
 
 `nowire review` reviews the working-tree diff. Use `--staged` for staged changes or `nowire review ./path/to/file.go` to scope a review.
+
+> **Important:** The default Ollama URL is local. If you set `ollama_url`, `OLLAMA_HOST`, or `--ollama` to a remote server, review its data-handling policy before sending source code. See [SECURITY.md](SECURITY.md).
 
 ## Output and CI
 
